@@ -7,9 +7,8 @@ spec:
     params:
       - name: GOALS
         description: The Maven goals to run
-        type: array
-        default:
-          - "package"
+        type: string
+        default: "package"
       - name: MAVEN_MIRROR_URL
         description: The Maven bucketrepo- mirror
         type: string
