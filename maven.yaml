@@ -9,6 +9,7 @@ spec:
         description: The Maven goals to run
         type: array
         default:
+          - "clean"
           - "package"
       - name: MAVEN_MIRROR_URL
         description: The Maven bucketrepo- mirror
@@ -48,6 +49,9 @@ spec:
       script: |
         #!/bin/sh
 
+        echo $(inputs.params.MAVEN_MIRROR_URL)
+        echo $(input.params.GOALS)
+
         bash -c "[[ -f /.m2/settings.xml ]] && \
             echo 'using existing /.m2/settings.xml' && \
             cat /.m2/settings.xml && exit 0
@@ -79,7 +83,7 @@ spec:
         [[ -f /.m2/settings.xml ]] && cat /.m2/settings.xml
         [[ -f /.m2/settings.xml ]]  || echo skipping settings"
 
-        echo $(inputs.params.GOALS)
+        echo ${#inputs.params.GOALS[@]}
 
       volumeMounts:
         - name: m2-repository
