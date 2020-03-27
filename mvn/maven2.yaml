@@ -1,14 +1,16 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: maven-scripts
+  name: maven
 spec:
   inputs:
     params:
       - name: GOALS
         description: The Maven goals to run
-        type: string
-        default: "package"
+        type: array
+        default:
+          - "clean"
+          - "install"
       - name: MAVEN_MIRROR_URL
         description: The Maven bucketrepo- mirror
         type: string
@@ -36,21 +38,23 @@ spec:
       - name: PROXY_PROTOCOL
         description: Protocol for the proxy ie http or https
         type: string
-        default: "http"
+        default: "https"
     resources:
       - name: source
         targetPath: /
         type: git
   steps:
-    - name: maven-settings
-      image: gcr.io/cloud-builders/mvn
+    - name: mvn-settings
+      image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+      workingDir: /.m2
       script: |
-        #!/bin/sh
+        #!/usr/bin/env bash
 
         [[ -f /.m2/settings.xml ]] && \
-            echo 'using existing /.m2/settings.xml' && \
-            cat /.m2/settings.xml && exit 0
-        [[ -n '$(inputs.params.MAVEN_MIRROR_URL)' ]] && \
+        echo 'using existing /.m2/settings.xml' && \
+        cat /.m2/settings.xml && exit 0
+
+        [[ -n '$(inputs.params.MAVEN_MIRROR_URL)' ]] || [[ -n '$(inputs.params.PROXY_HOST)' ]] && \
         cat > /.m2/settings.xml <<EOF
         <settings>
           <mirrors>
@@ -75,10 +79,29 @@ spec:
           </proxies>
         </settings>
         EOF
-        [[ -f /.m2/settings.xml ]] && cat /.m2/settings.xml
-        [[ -f /.m2/settings.xml ]]  || echo skipping settings
 
-        mvn $(inputs.params.GOALS)
+        [[ -f /.m2/settings.xml ]] && cat /.m2/settings.xml
+        [[ -f /.m2/settings.xml ]] || echo skipping settings
+
+      volumeMounts:
+        - name: m2-repository
+          mountPath: /.m2
+
+    - name: mvn-goals
+      image: gcr.io/cloud-builders/mvn
+      args:
+        - "$(inputs.params.GOALS)"
+      script: |
+        #!/bin/bash
+
+        if [[ -f "/.m2/settings.xml" ]]
+        then
+          echo "settings"
+          mvn ${@} --settings /.m2/settings.xml
+        else
+          echo "no settings"
+          mvn ${@}
+        fi
 
       volumeMounts:
         - name: m2-repository

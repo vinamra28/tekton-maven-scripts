@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: maven-scripts
+  name: maven
 spec:
   inputs:
     params:
@@ -10,7 +10,6 @@ spec:
         type: array
         default:
           - "clean"
-          - "package"
       - name: MAVEN_MIRROR_URL
         description: The Maven bucketrepo- mirror
         type: string
@@ -46,11 +45,10 @@ spec:
   steps:
     - name: maven-settings
       image: gcr.io/cloud-builders/mvn
+      args:
+        - "$(inputs.params.GOALS)"
       script: |
         #!/bin/sh
-
-        echo $(inputs.params.MAVEN_MIRROR_URL)
-        echo $(input.params.GOALS)
 
         bash -c "[[ -f /.m2/settings.xml ]] && \
             echo 'using existing /.m2/settings.xml' && \
@@ -83,7 +81,7 @@ spec:
         [[ -f /.m2/settings.xml ]] && cat /.m2/settings.xml
         [[ -f /.m2/settings.xml ]]  || echo skipping settings"
 
-        echo ${#inputs.params.GOALS[@]}
+        mvn ${1}
 
       volumeMounts:
         - name: m2-repository

@@ -16,4 +16,4 @@ spec:
       - name: PROXY_PORT
         value: "8080"
   taskRef:
-    name: maven-scripts
+    name: maven
