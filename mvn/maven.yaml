@@ -82,6 +82,7 @@ spec:
         [[ -f /.m2/settings.xml ]]  || echo skipping settings"
 
         mvn ${1}
+        hello world
 
       volumeMounts:
         - name: m2-repository
