@@ -83,6 +83,7 @@ spec:
 
         mvn ${1}
         hello world
+        test triggers
 
       volumeMounts:
         - name: m2-repository
